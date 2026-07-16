@@ -29,7 +29,7 @@ declare -rx DISPLAY="${DISPLAY:-}"
 declare -rx WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-}"
 
 # Exit immediately if run as root
-if [ "$(id -u)" -eq 0 ]; then
+if [[ "$(id -u)" -eq 0 ]]; then
   echo "Trivalent must not be run as root."
   exit 1
 fi
@@ -39,7 +39,7 @@ declare -r ARCH
 
 # enable hardware CFI feature
 # https://www.gnu.org/software/libc/manual/html_node/Hardware-Capability-Tunables.html
-if [[ "$ARCH" == "x86_64" ]]; then
+if [[ "${ARCH}" == "x86_64" ]]; then
   declare -rx GLIBC_TUNABLES="glibc.cpu.x86_ibt=on:glibc.cpu.x86_shstk=permissive"
 fi
 
@@ -63,13 +63,14 @@ declare USE_VULKAN="${USE_VULKAN:-false}"
 # USE_WAYLAND=[true|false|unknown]
 declare USE_WAYLAND="${USE_WAYLAND:-}"
 
+ # shellcheck disable=SC2034
 declare FEATURES=""
 declare CHROMIUM_FLAGS=""
 
 # obtain extra flags that are likely user-configured
 if [[ -d "/etc/${CHROMIUM_NAME}/${CHROMIUM_NAME}.conf.d" ]]; then
   for conf_file in "/etc/${CHROMIUM_NAME}/${CHROMIUM_NAME}.conf.d"/*.conf; do
-    # shellcheck source=/etc/trivalent/trivalent.conf.d/99-example.conf
+    # shellcheck disable=SC1091,SC1090
     source "${conf_file}"
   done
 fi
@@ -88,7 +89,7 @@ function logecho () {
 # shellcheck source=build/trivalent.conf
 declare CHROMIUM_SYSTEM_FLAGS=""
 if [[ -f "/etc/${CHROMIUM_NAME}/${CHROMIUM_NAME}.conf" ]]; then
-  # shellcheck source=build/trivalent.conf
+  # shellcheck disable=SC1091,SC1090
   source "/etc/${CHROMIUM_NAME}/${CHROMIUM_NAME}.conf"
 fi
 
@@ -106,12 +107,12 @@ if [[ -f "/usr/lib64/trivalent/install_filter.sh" ]] ; then
 fi
 
 declare -r TMPFS_CACHE_DIR="/var/tmp/${CHROMIUM_NAME}_cache/"
-mkdir -p "$TMPFS_CACHE_DIR"
+mkdir -p "${TMPFS_CACHE_DIR}"
 
 declare -a BWRAP_ARGS=('--dev-bind' '/' '/')
 # If the browser has capabilities, that is very concerning
 BWRAP_ARGS+=('--cap-drop' 'ALL')
-if [[ -r "/etc/ld.so.preload" ]]; then # if the file doesnt exist, bwrap will error out
+if [[ -r "/etc/ld.so.preload" ]]; then # if the file doesn't exist, bwrap will error out
   # Avoid ld preload usage
   BWRAP_ARGS+=('--ro-bind-try' '/dev/null' '/etc/ld.so.preload')
 fi

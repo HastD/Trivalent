@@ -1,7 +1,9 @@
 <!-- omit in toc -->
+
 # Contributing to Trivalent
 
 <!-- omit in toc -->
+
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
@@ -25,14 +27,16 @@ If you then still feel the need to ask a question and need clarification, we rec
 
 - Open an [Issue](https://github.com/secureblue/Trivalent/issues/new).
 - Provide as much context as you can about what you're running into.
-- Provide project and platform versions (nodejs, npm, etc), depending on what seems relevant.
+- Provide project and platform versions (Node.js, npm, etc), depending on what seems relevant.
 
 We will then take care of the issue as soon as possible.
 
 ## I Want To Contribute
 
 <!-- markdownlint-disable MD022 -->
+
 > ### Legal Notice <!-- omit in toc -->
+>
 > When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project license.
 
 ### Building locally
