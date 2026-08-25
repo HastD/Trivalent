@@ -61,11 +61,73 @@ index 158cc88454..8322d7a327 100644
        $i18nRaw{resetPageFeedback}
      </cr-checkbox>
    </div>
+diff --git a/chrome/browser/resources/settings/route.ts b/chrome/browser/resources/settings/route.ts
+index c8856314f8..ddb79ceb20 100644
+--- a/chrome/browser/resources/settings/route.ts
++++ b/chrome/browser/resources/settings/route.ts
+@@ -171,35 +171,6 @@ function createRoutes(): SettingsRoutes {
+     r.IMPORT_DATA.isNavigableDialog = true;
+     r.MANAGE_PROFILE = r.PEOPLE.createChild('/manageProfile');
+     // </if>
+-
+-    r.SYNC = r.PEOPLE.createChild('/syncSetup');
+-    r.SYNC_ADVANCED = r.SYNC.createChild('/syncSetup/advanced');
+-  }
+-
+-  if (visibility.ai !== false && loadTimeData.getBoolean('showAiPage')) {
+-    r.AI = r.BASIC.createSection(
+-        '/ai', 'ai', loadTimeData.getString('aiPageTitle'));
+-    if (loadTimeData.getBoolean('enableAiModeSearchSetting')) {
+-      r.AI_MODE_SEARCH = r.AI.createChild('/ai/aiModeSearch');
+-    }
+-    if (loadTimeData.getBoolean('showHistorySearchControl')) {
+-      r.HISTORY_SEARCH = r.AI.createChild('/ai/historySearch');
+-    }
+-    if (loadTimeData.getBoolean('showComposeControl')) {
+-      r.OFFER_WRITING_HELP = r.AI.createChild('/ai/helpMeWrite');
+-    }
+-    if (loadTimeData.getBoolean('showGlicSettings')) {
+-      r.GEMINI = r.AI.createChild('/ai/gemini');
+-      if (loadTimeData.getBoolean('actorLoginFederatedLoginSupportEnabled')) {
+-        r.GEMINI_LOGIN = r.GEMINI.createChild('/ai/gemini/login');
+-      }
+-    }
+-    if (loadTimeData.getBoolean('showAiSuggestionsControl')) {
+-      r.AI_SUGGESTIONS = r.AI.createChild('/ai/suggestions');
+-    }
+-    if (loadTimeData.getBoolean('showSkillsSettingPage')) {
+-      r.SKILLS = r.AI.createChild('/ai/skills');
+-    }
+   }
+
+   if (visibility.appearance !== false) {
+@@ -224,10 +195,6 @@ function createRoutes(): SettingsRoutes {
+       if (loadTimeData.getBoolean('shoppingIntegrationEnabled')) {
+         r.YOUR_SAVED_INFO_SHOPPING = r.YOUR_SAVED_INFO.createChild('/shopping');
+       }
+-      if (loadTimeData.getBoolean('showSuggestionsFromGeminiSettings')) {
+-        r.SUGGESTIONS_FROM_GEMINI =
+-            r.YOUR_SAVED_INFO.createChild('/enhancedAutofill');
+-      }
+       // <if expr="is_win or is_macosx">
+       r.PASSKEYS = r.YOUR_SAVED_INFO.createChild('/passkeys');
+       // </if>
+@@ -238,10 +205,6 @@ function createRoutes(): SettingsRoutes {
+     r.PAYMENTS = r.AUTOFILL.createChild('/payments');
+     r.ADDRESSES = r.AUTOFILL.createChild('/addresses');
+
+-    if (loadTimeData.getBoolean('showAutofillAiControl')) {
+-      r.AUTOFILL_AI = r.AUTOFILL.createChild('/enhancedAutofill');
+-    }
+-
+     // <if expr="is_win or is_macosx">
+     r.PASSKEYS = r.AUTOFILL.createChild('/passkeys');
+     // </if>
 diff --git a/chrome/browser/ui/webui/settings/settings_ui.cc b/chrome/browser/ui/webui/settings/settings_ui.cc
-index d5c37bda84..13e0197694 100644
+index dc64cf060b..11f88f4f21 100644
 --- a/chrome/browser/ui/webui/settings/settings_ui.cc
 +++ b/chrome/browser/ui/webui/settings/settings_ui.cc
-@@ -360,9 +360,7 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
+@@ -355,9 +355,7 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
    html_source->AddBoolean("isOSSettings", false);
  #endif  // BUILDFLAG(IS_CHROMEOS)
 
@@ -75,22 +137,8 @@ index d5c37bda84..13e0197694 100644
 +  bool show_privacy_guide = false;
    html_source->AddBoolean("showPrivacyGuide", show_privacy_guide);
 
-
-@@ -507,12 +505,7 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
-       privacy_sandbox_service->IsRestrictedNoticeEnabled();
-   bool is_ad_privacy_ux_deprecation_enabled = base::FeatureList::IsEnabled(
-       privacy_sandbox::kPrivacySandboxAdPrivacyUxDeprecation);
--  bool is_ad_privacy_available = true;
--  if (is_ad_privacy_ux_deprecation_enabled) {
--    is_ad_privacy_available = false;
--  } else if (is_privacy_sandbox_restricted) {
--    is_ad_privacy_available = is_restricted_notice_enabled;
--  }
-+  bool is_ad_privacy_available = false;
-
-   html_source->AddBoolean("isPrivacySandboxRestricted",
-                           is_privacy_sandbox_restricted);
-@@ -595,7 +588,6 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
+   html_source->AddBoolean("enableHandTrackingContentSetting",
+@@ -559,7 +557,6 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
    bool glic_disallowed_by_admin = false;
 
    auto glic_enablement = glic::GlicEnabling::EnablementForProfile(profile);
@@ -98,17 +146,21 @@ index d5c37bda84..13e0197694 100644
    glic_disallowed_by_admin = glic_enablement.DisallowedByAdmin();
 
    if (glic_enablement.IsProfileEligible()) {
-@@ -656,10 +656,10 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
+@@ -615,15 +612,13 @@ SettingsUI::SettingsUI(content::WebUI* web_ui)
+               kContextualTasksContextSmartTabSharingDefaultOnAvailability);
+   html_source->AddBoolean("enableAiModeSearchSetting", enable_ai_mode_search);
+
+-  const bool show_ai_settings_for_testing = base::FeatureList::IsEnabled(
+-      optimization_guide::features::kAiSettingsPageForceAvailable);
++  const bool show_ai_settings_for_testing = false;
 
    // Show the AI features section in the AI page if any of the AI features are
    // enabled.
--  bool show_ai_features_section = show_ai_settings_for_testing;
-+  bool show_ai_features_section = false;
-+
+   bool show_ai_features_section = show_ai_settings_for_testing;
    for (auto [name, visible] : optimization_guide_features) {
 -    html_source->AddBoolean(name, visible || show_ai_settings_for_testing);
 -    show_ai_features_section |= visible;
-+    html_source->AddBoolean(name, show_ai_features_section);
++    html_source->AddBoolean(name, show_ai_settings_for_testing);
    }
 
-   // Within the AI subpage are separate sections for Glic and for all other AI
+ #if BUILDFLAG(GOOGLE_CHROME_BRANDING)
