@@ -12,7 +12,7 @@
 
 Name:           %{chromium_name}-selinux
 Epoch:          1
-Version:        1.0.2
+Version:        1.0.3
 Release:        1
 Summary:        SELinux policies for %{chromium_name_branding}
 License:        Apache-2.0 OR MIT
@@ -67,6 +67,9 @@ fi
 %ghost %verify(not md5 size mode mtime) %{_selinux_store_path}/%{selinuxtype}/active/modules/200/%{modulename}
 
 %changelog
+* Sat Oct 4 2026 secureblue <noreply@secureblue.dev> - 1:1.0.3-1
+- allow glycin calls for GTK icons
+
 * Sat Sep 19 2026 secureblue <noreply@secureblue.dev> - 1:1.0.2-1
 - Add support for confined bubblewrap
 - Remove unnecessary SCTP socket access
